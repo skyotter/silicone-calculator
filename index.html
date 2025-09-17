@@ -24,7 +24,27 @@
     .tile{background:#f5f7fb;padding:12px;border-radius:8px;min-width:180px}
     .small-muted{font-size:13px;color:#444}
     .btn-row{display:flex;gap:8px}
-    @media(max-width:560px){.controls{flex-direction:column} input[type="number"]{width:100%}}
+
+    /* 🔹 手機優化：小於 600px 時，表格改成卡片樣式 */
+    @media(max-width:600px){
+      table, thead, tbody, th, td, tr { display:block; width:100%; }
+      thead { display:none; }
+      tr { background:#fafafa; margin-bottom:10px; border-radius:8px; padding:10px; box-shadow:0 2px 6px rgba(0,0,0,0.05); }
+      td { border:none; padding:6px 0; }
+      td:before { 
+        display:block;
+        font-size:12px;
+        font-weight:600;
+        color:#444;
+        margin-bottom:2px;
+      }
+      td:nth-child(1):before { content:"單條長度 (m)"; }
+      td:nth-child(2):before { content:"數量 (條)"; }
+      td:nth-child(3):before { content:"小計 (m)"; }
+      td:nth-child(4):before { content:"操作"; }
+      input[type="number"] { width:100%; }
+      .actions button { width:100%; }
+    }
   </style>
 </head>
 <body>
@@ -54,9 +74,7 @@
           <th style="width:15%">操作</th>
         </tr>
       </thead>
-      <tbody id="rowsTbody">
-        <!-- 動態新增列 -->
-      </tbody>
+      <tbody id="rowsTbody"></tbody>
     </table>
 
     <div class="summary" aria-live="polite">
@@ -108,7 +126,6 @@
       lenInput.step = '0.01';
       lenInput.min = '0';
       lenInput.value = length;
-      lenInput.style.width = '120px';
       tdLen.appendChild(lenInput);
 
       const tdQty = document.createElement('td');
@@ -117,7 +134,6 @@
       qtyInput.step = '1';
       qtyInput.min = '0';
       qtyInput.value = qty;
-      qtyInput.style.width = '120px';
       tdQty.appendChild(qtyInput);
 
       const tdSub = document.createElement('td');
@@ -177,7 +193,6 @@
         return;
       }
 
-      // ✅ 修改：顯示到小數點第一位，而不是向上取整
       const needed = Math.round((totalMm / unitMm) * 10) / 10;
       neededUnitsEl.textContent = needed + ' 支';
 
