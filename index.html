@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>矽利康長度計算器</title>
+  <style>
+    body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif; padding:18px; background:#f7f9fb; color:#111}
+    .card{max-width:900px;margin:8px auto;padding:18px;background:#fff;border-radius:8px;box-shadow:0 6px 20px rgba(20,30,50,0.06)}
+    h1{margin:0 0 6px;font-size:20px}
+    p.small{color:#555;margin-top:0}
+    .controls{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}
+    label{font-size:13px;color:#333}
+    input[type="number"]{padding:8px;border:1px solid #d7dbe0;border-radius:6px;width:120px}
+    button{padding:8px 10px;border-radius:6px;border:0;background:#1f8ef1;color:#fff;cursor:pointer}
+    button.ghost{background:#e9eef9;color:#1f3b6b}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{padding:8px 10px;border-bottom:1px solid #eee;text-align:left}
+    th{background:#fbfcff;font-weight:600}
+    .right{text-align:right}
+    .muted{color:#666;font-size:13px}
+    .actions button{background:#ff6b6b}
+    .summary{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}
+    .tile{background:#f5f7fb;padding:12px;border-radius:8px;min-width:180px}
+    .small-muted{font-size:13px;color:#444}
+    .btn-row{display:flex;gap:8px}
+    @media(max-width:560px){.controls{flex-direction:column} input[type="number"]{width:100%}}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>矽利康長度計算器</h1>
+    <p class="small">逐條輸入需要封縫的長度（公尺）與數量，系統會幫你加總並計算需要幾支矽利康（預設 28m / 支）</p>
+
+    <div class="controls" aria-label="設定區">
+      <label>
+        一支矽利康可打長度（m）
+        <div><input id="unitLength" type="number" step="0.01" min="0.01" value="28"></div>
+      </label>
+
+      <div style="display:flex;align-items:flex-end;gap:8px">
+        <button id="addRowBtn">+ 新增一種長度</button>
+        <button id="sampleBtn" class="ghost">範例資料</button>
+        <button id="clearBtn" class="ghost">清空所有</button>
+      </div>
+    </div>
+
+    <table aria-label="長度列表">
+      <thead>
+        <tr>
+          <th style="width:35%">單條長度（m）</th>
+          <th style="width:25%">數量（條）</th>
+          <th style="width:25%" class="right">小計（m）</th>
+          <th style="width:15%">操作</th>
+        </tr>
+      </thead>
+      <tbody id="rowsTbody">
+        <!-- 動態新增列 -->
+      </tbody>
+    </table>
+
+    <div class="summary" aria-live="polite">
+      <div class="tile">
+        <div class="small-muted">總長度</div>
+        <div id="totalMeters" style="font-size:18px;font-weight:600">0 m</div>
+      </div>
+      <div class="tile">
+        <div class="small-muted">需要矽利康支數</div>
+        <div id="neededUnits" style="font-size:18px;font-weight:600">0 支</div>
+      </div>
+      <div class="tile">
+        <div class="small-muted">最後一支剩餘可用長度</div>
+        <div id="leftover" style="font-size:18px;font-weight:600">0 m</div>
+      </div>
+    </div>
+
+    <div style="margin-top:14px" class="muted">
+      <div>提示：輸入小數（例如 2.5）或整數都可以。系統內部以毫米（mm）做整數運算以減少小數誤差。</div>
+    </div>
+  </div>
+
+  <script>
+    const rowsTbody = document.getElementById('rowsTbody');
+    const unitInput = document.getElementById('unitLength');
+    const totalMetersEl = document.getElementById('totalMeters');
+    const neededUnitsEl = document.getElementById('neededUnits');
+    const leftoverEl = document.getElementById('leftover');
+    const addRowBtn = document.getElementById('addRowBtn');
+    const sampleBtn = document.getElementById('sampleBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    function metersToMm(v){
+      const n = parseFloat(v);
+      if (!isFinite(n)) return 0;
+      return Math.round(n * 1000);
+    }
+    function mmToMetersStr(mm){
+      const m = mm / 1000;
+      return (Math.round(m * 1000) / 1000).toString().replace(/\.?0+$/,'') + ' m';
+    }
+
+    function createRow(length = '', qty = 1){
+      const tr = document.createElement('tr');
+
+      const tdLen = document.createElement('td');
+      const lenInput = document.createElement('input');
+      lenInput.type = 'number';
+      lenInput.step = '0.01';
+      lenInput.min = '0';
+      lenInput.value = length;
+      lenInput.style.width = '120px';
+      tdLen.appendChild(lenInput);
+
+      const tdQty = document.createElement('td');
+      const qtyInput = document.createElement('input');
+      qtyInput.type = 'number';
+      qtyInput.step = '1';
+      qtyInput.min = '0';
+      qtyInput.value = qty;
+      qtyInput.style.width = '120px';
+      tdQty.appendChild(qtyInput);
+
+      const tdSub = document.createElement('td');
+      tdSub.className = 'right muted';
+      tdSub.textContent = '0 m';
+
+      const tdAct = document.createElement('td');
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.textContent = '刪除';
+      delBtn.className = 'actions';
+      delBtn.style.background = '#ff6b6b';
+      delBtn.style.border = 'none';
+      delBtn.style.color = '#fff';
+      delBtn.style.padding = '6px 8px';
+      delBtn.style.borderRadius = '6px';
+      tdAct.appendChild(delBtn);
+
+      tr.appendChild(tdLen);
+      tr.appendChild(tdQty);
+      tr.appendChild(tdSub);
+      tr.appendChild(tdAct);
+      rowsTbody.appendChild(tr);
+
+      function onChange(){ recalc(); }
+      lenInput.addEventListener('input', onChange);
+      qtyInput.addEventListener('input', onChange);
+      delBtn.addEventListener('click', () => { tr.remove(); recalc(); });
+
+      recalc();
+      return {tr, lenInput, qtyInput, tdSub};
+    }
+
+    function ensureAtLeastOneRow(){
+      if (rowsTbody.children.length === 0) createRow('', 1);
+    }
+
+    function recalc(){
+      const unitMm = metersToMm(unitInput.value || 0);
+      let totalMm = 0;
+      for (const tr of Array.from(rowsTbody.children)){
+        const lenInput = tr.querySelector('input[type="number"]');
+        const qtyInput = tr.querySelectorAll('input[type="number"]')[1];
+        const subTd = tr.children[2];
+        const lenMm = metersToMm(lenInput.value || 0);
+        const qty = Math.max(0, Math.floor(Number(qtyInput.value) || 0));
+        const subMm = lenMm * qty;
+        totalMm += subMm;
+        subTd.textContent = mmToMetersStr(subMm);
+      }
+
+      totalMetersEl.textContent = mmToMetersStr(totalMm);
+
+      if (unitMm <= 0){
+        neededUnitsEl.textContent = '請設定每支可打長度';
+        leftoverEl.textContent = '—';
+        return;
+      }
+
+      // ✅ 修改：顯示到小數點第一位，而不是向上取整
+      const needed = Math.round((totalMm / unitMm) * 10) / 10;
+      neededUnitsEl.textContent = needed + ' 支';
+
+      const leftoverMm = Math.max(0, Math.floor(needed * unitMm - totalMm));
+      leftoverEl.textContent = mmToMetersStr(leftoverMm);
+    }
+
+    addRowBtn.addEventListener('click', ()=> createRow('',1));
+    sampleBtn.addEventListener('click', ()=>{
+      rowsTbody.innerHTML = '';
+      createRow(2.5,4);
+      createRow(1.2,10);
+      createRow(3.3,3);
+      recalc();
+    });
+    clearBtn.addEventListener('click', ()=>{
+      if (confirm('清空所有列？')){ rowsTbody.innerHTML=''; ensureAtLeastOneRow(); recalc(); }
+    });
+
+    window.addEventListener('load', ()=>{
+      const savedUnit = localStorage.getItem('silicone_unit_m');
+      if (savedUnit) unitInput.value = savedUnit;
+      ensureAtLeastOneRow();
+      recalc();
+    });
+
+    unitInput.addEventListener('input', ()=>{
+      const v = parseFloat(unitInput.value);
+      if (isFinite(v) && v > 0) localStorage.setItem('silicone_unit_m', String(v));
+      recalc();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        createRow('',1);
+      }
+    });
+  </script>
+</body>
+</html>
