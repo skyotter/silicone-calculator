@@ -27,7 +27,7 @@
 
     /* 🔹 手機優化：小於 600px 時，表格改成卡片樣式 */
     @media(max-width:600px){
-      table, thead, tbody, th, td, tr { display:block; width:100%; }
+      table, thead, tbody, th, td, tr { display:block; width:95%; }
       thead { display:none; }
       tr { background:#fafafa; margin-bottom:10px; border-radius:8px; padding:10px; box-shadow:0 2px 6px rgba(0,0,0,0.05); }
       td { border:none; padding:6px 0; }
@@ -42,15 +42,15 @@
       td:nth-child(2):before { content:"數量 (條)"; }
       td:nth-child(3):before { content:"小計 (m)"; }
       td:nth-child(4):before { content:"操作"; }
-      input[type="number"] { width:100%; }
-      .actions button { width:100%; }
+      input[type="number"] { width:90%; }
+      .actions button { width:90%; }
     }
   </style>
 </head>
 <body>
   <div class="card">
     <h1>矽利康長度計算器</h1>
-    <p class="small">逐條輸入需要封縫的長度（公尺）與數量，系統會幫你加總並計算需要幾支矽利康（預設 28m / 支）</p>
+    <p class="small">逐條輸入需要封縫的長度(公尺)與數量，系統會幫你加總並計算需要幾支矽利康(預設28m/支)</p>
 
     <div class="controls" aria-label="設定區">
       <label>
@@ -86,14 +86,10 @@
         <div class="small-muted">需要矽利康支數</div>
         <div id="neededUnits" style="font-size:18px;font-weight:600">0 支</div>
       </div>
-      <div class="tile">
-        <div class="small-muted">最後一支剩餘可用長度</div>
-        <div id="leftover" style="font-size:18px;font-weight:600">0 m</div>
-      </div>
     </div>
 
     <div style="margin-top:14px" class="muted">
-      <div>提示：輸入小數（例如 2.5）或整數都可以。系統內部以毫米（mm）做整數運算以減少小數誤差。</div>
+      <div>提示：輸入小數(例如 2.5)或整數都可以。系統內部以毫米(mm)做整數運算以減少小數誤差。</div>
     </div>
   </div>
 
