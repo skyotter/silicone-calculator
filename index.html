@@ -57,7 +57,7 @@
     <div class="card">
       <h1>矽利康使用支數計算器（含類別：庫版／內襯）</h1>
       <p class="small">在各類別中輸入需要封縫的 <b>單條長度（mm）</b> 與 <b>數量</b>，系統會以 <b>mm</b> 進行整數運算並計算需要幾支矽利康。</p>
-      <p class="muted">提示：每個類別可獨立設定「一支矽利康可打長度（mm）」。最下方顯示全部類別合計。</p>
+      <p class="muted">提示：每個類別可獨立設定「一支矽利康可打長度（m）」。最下方顯示全部類別合計。</p>
     </div>
 
     <div class="categories" id="cats"></div>
@@ -99,7 +99,7 @@
     function makeCategory(opts){
       var key = opts.key;
       var title = opts.title;
-      var defaultUnitMm = typeof opts.defaultUnitMm === 'number' ? opts.defaultUnitMm : 28000;
+      var defaultUnitMm = typeof opts.defaultUnitMm === 'number' ? opts.defaultUnitMm : 28000; // 傳入仍是 mm
       var host = opts.container;
       var rows = [];
 
@@ -109,9 +109,11 @@
       var header = document.createElement('div'); header.className = 'cat-header'; wrap.appendChild(header);
       var titleEl = document.createElement('div'); titleEl.className = 'cat-title'; titleEl.textContent = title; header.appendChild(titleEl);
 
-      var unitLabel = document.createElement('label'); unitLabel.textContent = '一支矽利康可打長度（mm）'; header.appendChild(unitLabel);
-      var unitInput = document.createElement('input'); unitInput.type = 'number'; unitInput.min = '1'; unitInput.step = '1';
-      unitInput.value = defaultUnitMm; unitInput.className = 'w90'; unitLabel.appendChild(unitInput);
+      /* ▼ 修改：顯示單位為 m，並接受小數（內部換算 mm） */
+      var unitLabel = document.createElement('label'); unitLabel.textContent = '一支矽利康可打長度（m）'; header.appendChild(unitLabel);
+      var unitInput = document.createElement('input'); unitInput.type = 'number'; unitInput.min = '0.001'; unitInput.step = '0.01';
+      unitInput.value = (defaultUnitMm/1000); unitInput.className = 'w90'; unitLabel.appendChild(unitInput);
+      /* ▲ */
 
       var btnRow = document.createElement('div'); btnRow.className = 'btn-row'; header.appendChild(btnRow);
       var addBtn = document.createElement('button'); addBtn.className = 'btn'; addBtn.textContent = '+ 新增一種長度'; btnRow.appendChild(addBtn);
@@ -147,7 +149,9 @@
       var unitsEl = sum.querySelector('#'+key+'-u');
 
       function compute(){
-        var unitMm = clampInt(unitInput.value)||0;
+        /* ▼ 修改：把 m 輸入轉換成 mm 來計算 */
+        var unitMm = Math.round(parseFloat(unitInput.value || 0) * 1000); // m → mm
+        /* ▲ */
         var totalMm = 0;
         for (var i=0;i<rows.length;i++){
           var r = rows[i];
@@ -199,7 +203,9 @@
 
       function saveState(){
         try{
-          var data = {unit: clampInt(unitInput.value)||0, rows: []};
+          /* ▼ 修改：儲存為 mm（從 m 轉 mm） */
+          var data = {unit: Math.round(parseFloat(unitInput.value||0)*1000) || 0, rows: []};
+          /* ▲ */
           for (var i=0;i<rows.length;i++){
             data.rows.push({len: clampInt(rows[i].len.value), qty: clampInt(rows[i].qty.value)});
           }
@@ -211,7 +217,9 @@
           var raw = localStorage.getItem(key+'_state');
           if (!raw){ ensureOneRow(); recalc(); return; }
           var obj = JSON.parse(raw);
-          if (obj && obj.unit){ unitInput.value = clampInt(obj.unit); }
+          /* ▼ 修改：載入時把 mm 還原成 m 顯示 */
+          if (obj && obj.unit!=null){ unitInput.value = (clampInt(obj.unit) / 1000); }
+          /* ▲ */
           tbody.innerHTML=''; rows = [];
           if (obj && obj.rows && obj.rows.length){
             for (var i=0;i<obj.rows.length;i++){ createRow(obj.rows[i].len, obj.rows[i].qty); }
