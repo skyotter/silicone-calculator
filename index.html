@@ -3,228 +3,277 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>矽利康使用支數計算器</title>
+  <title>矽利康使用支數計算器（含類別）</title>
   <style>
-    body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif; padding:18px; background:#f7f9fb; color:#111}
-    .card{max-width:900px;margin:8px auto;padding:18px;background:#fff;border-radius:8px;box-shadow:0 6px 20px rgba(20,30,50,0.06)}
-    h1{margin:0 0 6px;font-size:20px}
-    p.small{color:#555;margin-top:0}
-    .controls{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}
-    label{font-size:13px;color:#333}
-    input[type="number"]{padding:8px;border:1px solid #d7dbe0;border-radius:6px;width:120px}
-    button{padding:8px 10px;border-radius:6px;border:0;background:#1f8ef1;color:#fff;cursor:pointer}
-    button.ghost{background:#e9eef9;color:#1f3b6b}
+    :root{
+      --bg:#f7f9fb;--card:#fff;--ink:#111;--muted:#666;--line:#eee;
+      --primary:#1f8ef1;--ghost-bg:#e9eef9;--ghost-ink:#1f3b6b;--bad:#ff6b6b;--tile:#f5f7fb;
+    }
+    body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--ink);padding:18px}
+    .page{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+    .card{background:var(--card);border-radius:12px;box-shadow:0 6px 20px rgba(20,30,50,0.06);padding:18px}
+    h1{margin:0 0 4px;font-size:22px}
+    p.small{margin:0;color:#555}
+    .muted{color:var(--muted);font-size:13px}
+    .categories{display:grid;grid-template-columns:1fr;gap:14px}
+    @media(min-width:1000px){.categories{grid-template-columns:1fr 1fr}}
+    .cat-header{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px}
+    .cat-title{font-size:18px;font-weight:700;margin-right:auto}
+    label{font-size:13px;color:#333;display:block}
+    input[type="number"]{padding:8px;border:1px solid #d7dbe0;border-radius:6px}
+    input.w90{width:90px}
+    .btn{padding:8px 10px;border:0;border-radius:6px;background:var(--primary);color:#fff;cursor:pointer}
+    .btn.ghost{background:var(--ghost-bg);color:var(--ghost-ink)}
+    .btn.bad{background:var(--bad)}
+    .btn-row{display:flex;gap:8px;flex-wrap:wrap}
     table{width:100%;border-collapse:collapse;margin-top:10px}
-    th,td{padding:8px 10px;border-bottom:1px solid #eee;text-align:left}
+    th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
     th{background:#fbfcff;font-weight:600}
     .right{text-align:right}
-    .muted{color:#666;font-size:13px}
-    .actions button{background:#ff6b6b}
-    .summary{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}
-    .tile{background:#f5f7fb;padding:12px;border-radius:8px;min-width:180px}
-    .small-muted{font-size:13px;color:#444}
-    .btn-row{display:flex;gap:8px}
-
-    /* 🔹 手機優化：小於 600px 時，表格改成卡片樣式 */
+    .summary{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+    .tile{background:var(--tile);padding:12px;border-radius:10px;min-width:180px}
+    .tile .k{font-size:13px;color:#444}
+    .tile .v{font-weight:700;font-size:18px}
+    .overall{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+    .overall .tiles{display:flex;gap:12px;flex-wrap:wrap}
+    /* 手機表格卡片化 */
     @media(max-width:600px){
       table, thead, tbody, th, td, tr { display:block; width:95%; }
-      thead { display:none; }
-      tr { background:#fafafa; margin-bottom:10px; border-radius:8px; padding:10px; box-shadow:0 2px 6px rgba(0,0,0,0.05); }
-      td { border:none; padding:6px 0; }
-      td:before { 
-        display:block;
-        font-size:12px;
-        font-weight:600;
-        color:#444;
-        margin-bottom:2px;
-      }
-      td:nth-child(1):before { content:"單條長度 (m)"; }
-      td:nth-child(2):before { content:"數量 (條)"; }
-      td:nth-child(3):before { content:"小計 (m)"; }
-      td:nth-child(4):before { content:"操作"; }
-      input[type="number"] { width:90%; }
-      .actions button { width:90%; }
+      thead{display:none}
+      tr{background:#fafafa;margin-bottom:10px;border-radius:8px;padding:10px;box-shadow:0 2px 6px rgba(0,0,0,0.05)}
+      td{border:none;padding:6px 0}
+      td:before{display:block;font-size:12px;font-weight:600;color:#444;margin-bottom:2px}
+      td:nth-child(1):before{content:"單條長度 (mm)"}
+      td:nth-child(2):before{content:"數量 (條)"}
+      td:nth-child(3):before{content:"小計 (mm)"}
+      td:nth-child(4):before{content:"操作"}
+      input[type="number"]{width:90%}
+      .btn.bad{width:90%}
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>矽利康使用支數計算器</h1>
-    <p class="small">逐條輸入需要封縫的長度(公尺)與數量，系統會幫你加總並計算需要幾支矽利康(預設28m/支)</p>
+  <div class="page">
+    <div class="card">
+      <h1>矽利康使用支數計算器（含類別：庫版／內襯）</h1>
+      <p class="small">在各類別中輸入需要封縫的 <b>單條長度（mm）</b> 與 <b>數量</b>，系統會以 <b>mm</b> 進行整數運算並計算需要幾支矽利康。</p>
+      <p class="muted">提示：每個類別可獨立設定「一支矽利康可打長度（mm）」。最下方顯示全部類別合計。</p>
+    </div>
 
-    <div class="controls" aria-label="設定區">
-      <label>
-        一支矽利康可打長度（m）
-        <div><input id="unitLength" type="number" step="0.01" min="0.01" value="28"></div>
-      </label>
+    <div class="categories" id="cats"></div>
 
-      <div style="display:flex;align-items:flex-end;gap:8px">
-        <button id="addRowBtn">+ 新增一種長度</button>
-        <button id="sampleBtn" class="ghost">範例資料</button>
-        <button id="clearBtn" class="ghost">清空所有</button>
+    <div class="card">
+      <div class="overall">
+        <div>
+          <div style="font-weight:700;font-size:18px">全部類別合計</div>
+          <div class="muted">支數為各類別所需支數相加（各以自身可打長度計算）。</div>
+        </div>
+        <div class="tiles">
+          <div class="tile">
+            <div class="k">總長度</div>
+            <div class="v" id="overallM">0 m</div>
+            <div class="muted" id="overallMM">0 mm</div>
+          </div>
+          <div class="tile">
+            <div class="k">需要矽利康支數（加總）</div>
+            <div class="v" id="overallUnits">0 支</div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <table aria-label="長度列表">
-      <thead>
-        <tr>
-          <th style="width:35%">單條長度（m）</th>
-          <th style="width:25%">數量（條）</th>
-          <th style="width:25%" class="right">小計（m）</th>
-          <th style="width:15%">操作</th>
-        </tr>
-      </thead>
-      <tbody id="rowsTbody"></tbody>
-    </table>
-
-    <div class="summary" aria-live="polite">
-      <div class="tile">
-        <div class="small-muted">總長度</div>
-        <div id="totalMeters" style="font-size:18px;font-weight:600">0 m</div>
-      </div>
-      <div class="tile">
-        <div class="small-muted">需要矽利康支數</div>
-        <div id="neededUnits" style="font-size:18px;font-weight:600">0 支</div>
-      </div>
-    </div>
-
-    <div style="margin-top:14px" class="muted">
-      <div>提示：輸入小數(例如 2.5)或整數都可以。系統內部以毫米(mm)做整數運算以減少小數誤差。</div>
-    </div>
+    <div class="card"><div class="muted">快捷鍵：<code>Ctrl/Cmd + Enter</code> 在目前類別新增一列。</div></div>
   </div>
 
   <script>
-    const rowsTbody = document.getElementById('rowsTbody');
-    const unitInput = document.getElementById('unitLength');
-    const totalMetersEl = document.getElementById('totalMeters');
-    const neededUnitsEl = document.getElementById('neededUnits');
-    const leftoverEl = document.getElementById('leftover');
-    const addRowBtn = document.getElementById('addRowBtn');
-    const sampleBtn = document.getElementById('sampleBtn');
-    const clearBtn = document.getElementById('clearBtn');
-
-    function metersToMm(v){
-      const n = parseFloat(v);
-      if (!isFinite(n)) return 0;
-      return Math.round(n * 1000);
-    }
+    // —— 基本函式（用 ES5/DOM API，避免相容性問題） ——
+    function clampInt(v){ var n = Math.floor(Number(v)); return isFinite(n) && n >= 0 ? n : 0; }
     function mmToMetersStr(mm){
-      const m = mm / 1000;
+      var m = mm / 1000;
       return (Math.round(m * 1000) / 1000).toString().replace(/\.?0+$/,'') + ' m';
     }
+    function fmtMm(mm){ return clampInt(mm) + ' mm'; }
+    function round1(x){ return Math.round(x * 10) / 10; }
 
-    function createRow(length = '', qty = 1){
-      const tr = document.createElement('tr');
+    // —— 類別工廠 ——（避免 class/新語法造成的問題）
+    function makeCategory(opts){
+      var key = opts.key;
+      var title = opts.title;
+      var defaultUnitMm = typeof opts.defaultUnitMm === 'number' ? opts.defaultUnitMm : 28000;
+      var host = opts.container;
+      var rows = [];
 
-      const tdLen = document.createElement('td');
-      const lenInput = document.createElement('input');
-      lenInput.type = 'number';
-      lenInput.step = '0.01';
-      lenInput.min = '0';
-      lenInput.value = length;
-      tdLen.appendChild(lenInput);
+      var wrap = document.createElement('div'); wrap.className = 'card'; host.appendChild(wrap);
 
-      const tdQty = document.createElement('td');
-      const qtyInput = document.createElement('input');
-      qtyInput.type = 'number';
-      qtyInput.step = '1';
-      qtyInput.min = '0';
-      qtyInput.value = qty;
-      tdQty.appendChild(qtyInput);
+      // Header
+      var header = document.createElement('div'); header.className = 'cat-header'; wrap.appendChild(header);
+      var titleEl = document.createElement('div'); titleEl.className = 'cat-title'; titleEl.textContent = title; header.appendChild(titleEl);
 
-      const tdSub = document.createElement('td');
-      tdSub.className = 'right muted';
-      tdSub.textContent = '0 m';
+      var unitLabel = document.createElement('label'); unitLabel.textContent = '一支矽利康可打長度（mm）'; header.appendChild(unitLabel);
+      var unitInput = document.createElement('input'); unitInput.type = 'number'; unitInput.min = '1'; unitInput.step = '1';
+      unitInput.value = defaultUnitMm; unitInput.className = 'w90'; unitLabel.appendChild(unitInput);
 
-      const tdAct = document.createElement('td');
-      const delBtn = document.createElement('button');
-      delBtn.type = 'button';
-      delBtn.textContent = '刪除';
-      delBtn.className = 'actions';
-      delBtn.style.background = '#ff6b6b';
-      delBtn.style.border = 'none';
-      delBtn.style.color = '#fff';
-      delBtn.style.padding = '6px 8px';
-      delBtn.style.borderRadius = '6px';
-      tdAct.appendChild(delBtn);
+      var btnRow = document.createElement('div'); btnRow.className = 'btn-row'; header.appendChild(btnRow);
+      var addBtn = document.createElement('button'); addBtn.className = 'btn'; addBtn.textContent = '+ 新增一種長度'; btnRow.appendChild(addBtn);
+      var sampleBtn = document.createElement('button'); sampleBtn.className = 'btn ghost'; sampleBtn.textContent = '範例資料'; btnRow.appendChild(sampleBtn);
+      var clearBtn = document.createElement('button'); clearBtn.className = 'btn ghost'; clearBtn.textContent = '清空所有'; btnRow.appendChild(clearBtn);
 
-      tr.appendChild(tdLen);
-      tr.appendChild(tdQty);
-      tr.appendChild(tdSub);
-      tr.appendChild(tdAct);
-      rowsTbody.appendChild(tr);
+      // Table
+      var table = document.createElement('table'); table.setAttribute('aria-label', title + ' 長度列表'); wrap.appendChild(table);
+      var thead = document.createElement('thead');
+      thead.innerHTML = '<tr>\
+          <th style="width:35%">單條長度（mm）</th>\
+          <th style="width:25%">數量（條）</th>\
+          <th style="width:25%" class="right">小計（mm）</th>\
+          <th style="width:15%">操作</th>\
+        </tr>';
+      var tbody = document.createElement('tbody');
+      table.appendChild(thead); table.appendChild(tbody);
 
-      function onChange(){ recalc(); }
-      lenInput.addEventListener('input', onChange);
-      qtyInput.addEventListener('input', onChange);
-      delBtn.addEventListener('click', () => { tr.remove(); recalc(); });
+      // Summary
+      var sum = document.createElement('div'); sum.className = 'summary';
+      sum.innerHTML = '<div class="tile">\
+          <div class="k">本類別總長度</div>\
+          <div class="v" id="'+key+'-m">0 m</div>\
+          <div class="muted" id="'+key+'-mm">0 mm</div>\
+        </div>\
+        <div class="tile">\
+          <div class="k">本類別需要支數</div>\
+          <div class="v" id="'+key+'-u">0 支</div>\
+        </div>';
+      wrap.appendChild(sum);
+      var lenMEl = sum.querySelector('#'+key+'-m');
+      var lenMmEl = sum.querySelector('#'+key+'-mm');
+      var unitsEl = sum.querySelector('#'+key+'-u');
 
-      recalc();
-      return {tr, lenInput, qtyInput, tdSub};
-    }
-
-    function ensureAtLeastOneRow(){
-      if (rowsTbody.children.length === 0) createRow('', 1);
-    }
-
-    function recalc(){
-      const unitMm = metersToMm(unitInput.value || 0);
-      let totalMm = 0;
-      for (const tr of Array.from(rowsTbody.children)){
-        const lenInput = tr.querySelector('input[type="number"]');
-        const qtyInput = tr.querySelectorAll('input[type="number"]')[1];
-        const subTd = tr.children[2];
-        const lenMm = metersToMm(lenInput.value || 0);
-        const qty = Math.max(0, Math.floor(Number(qtyInput.value) || 0));
-        const subMm = lenMm * qty;
-        totalMm += subMm;
-        subTd.textContent = mmToMetersStr(subMm);
+      function compute(){
+        var unitMm = clampInt(unitInput.value)||0;
+        var totalMm = 0;
+        for (var i=0;i<rows.length;i++){
+          var r = rows[i];
+          var lenMm = clampInt(r.len.value);
+          var qty = clampInt(r.qty.value);
+          var sub = lenMm * qty;
+          totalMm += sub;
+          r.sub.textContent = fmtMm(sub);
+        }
+        var units = unitMm > 0 ? totalMm / unitMm : 0;
+        return {totalMm: totalMm, unitsRaw: units};
       }
 
-      totalMetersEl.textContent = mmToMetersStr(totalMm);
-
-      if (unitMm <= 0){
-        neededUnitsEl.textContent = '請設定每支可打長度';
-        leftoverEl.textContent = '—';
-        return;
+      function recalc(){
+        var c = compute();
+        lenMEl.textContent = mmToMetersStr(c.totalMm);
+        lenMmEl.textContent = fmtMm(c.totalMm);
+        unitsEl.textContent = round1(c.unitsRaw) + ' 支';
+        updateOverall();
       }
 
-      const needed = Math.round((totalMm / unitMm) * 10) / 10;
-      neededUnitsEl.textContent = needed + ' 支';
+      function createRow(len, qty){
+        var tr = document.createElement('tr'); tbody.appendChild(tr);
+        var td1 = document.createElement('td'); var lenInput = document.createElement('input');
+        lenInput.type = 'number'; lenInput.min='0'; lenInput.step='1'; lenInput.value = (len!=null?len:''); td1.appendChild(lenInput);
+        var td2 = document.createElement('td'); var qtyInput = document.createElement('input');
+        qtyInput.type = 'number'; qtyInput.min='0'; qtyInput.step='1'; qtyInput.value = (qty!=null?qty:1); td2.appendChild(qtyInput);
+        var td3 = document.createElement('td'); td3.className='right muted'; td3.textContent='0 mm';
+        var td4 = document.createElement('td'); var del = document.createElement('button'); del.className='btn bad'; del.textContent='刪除'; td4.appendChild(del);
+        tr.appendChild(td1);tr.appendChild(td2);tr.appendChild(td3);tr.appendChild(td4);
 
-      const leftoverMm = Math.max(0, Math.floor(needed * unitMm - totalMm));
-      leftoverEl.textContent = mmToMetersStr(leftoverMm);
+        function onChange(){ recalc(); saveState(); }
+        lenInput.addEventListener('input', onChange);
+        qtyInput.addEventListener('input', onChange);
+        del.addEventListener('click', function(){
+          tbody.removeChild(tr);
+          for (var i=0;i<rows.length;i++){ if (rows[i].tr===tr){ rows.splice(i,1); break; } }
+          if (rows.length===0){ createRow('',1); } // 始終保有一列
+          recalc(); saveState();
+        });
+
+        rows.push({tr:tr,len:lenInput,qty:qtyInput,sub:td3});
+        recalc(); saveState();
+      }
+
+      function ensureOneRow(){
+        if (rows.length===0){ createRow('',1); }
+      }
+
+      function saveState(){
+        try{
+          var data = {unit: clampInt(unitInput.value)||0, rows: []};
+          for (var i=0;i<rows.length;i++){
+            data.rows.push({len: clampInt(rows[i].len.value), qty: clampInt(rows[i].qty.value)});
+          }
+          localStorage.setItem(key+'_state', JSON.stringify(data));
+        }catch(e){}
+      }
+      function loadState(){
+        try{
+          var raw = localStorage.getItem(key+'_state');
+          if (!raw){ ensureOneRow(); recalc(); return; }
+          var obj = JSON.parse(raw);
+          if (obj && obj.unit){ unitInput.value = clampInt(obj.unit); }
+          tbody.innerHTML=''; rows = [];
+          if (obj && obj.rows && obj.rows.length){
+            for (var i=0;i<obj.rows.length;i++){ createRow(obj.rows[i].len, obj.rows[i].qty); }
+          }else{
+            ensureOneRow();
+          }
+        }catch(e){
+          ensureOneRow();
+        }
+        recalc();
+      }
+
+      // 事件
+      addBtn.addEventListener('click', function(){ createRow('',1); });
+      sampleBtn.addEventListener('click', function(){
+        tbody.innerHTML=''; rows=[]; createRow(3370,2); createRow(2170,5); createRow(1470,10); recalc(); saveState();
+      });
+      clearBtn.addEventListener('click', function(){
+        if (confirm('清空「'+title+'」所有列？')){ tbody.innerHTML=''; rows=[]; createRow('',1); recalc(); saveState(); }
+      });
+      unitInput.addEventListener('input', function(){ recalc(); saveState(); });
+
+      // 供外部使用
+      return {
+        compute: compute,
+        recalc: recalc,
+        addRowHotkey: function(){ createRow('',1); },
+        load: loadState,
+        focusWithin: function(el){ return wrap.contains(el); }
+      };
     }
 
-    addRowBtn.addEventListener('click', ()=> createRow('',1));
-    sampleBtn.addEventListener('click', ()=>{
-      rowsTbody.innerHTML = '';
-      createRow(2.5,4);
-      createRow(1.2,10);
-      createRow(3.3,3);
-      recalc();
-    });
-    clearBtn.addEventListener('click', ()=>{
-      if (confirm('清空所有列？')){ rowsTbody.innerHTML=''; ensureAtLeastOneRow(); recalc(); }
-    });
+    // —— 建立兩個類別與合計 —— 
+    var catsWrap = document.getElementById('cats');
+    var catA = makeCategory({key:'kuban', title:'庫版', defaultUnitMm:28000, container:catsWrap});
+    var catB = makeCategory({key:'neichen', title:'內襯', defaultUnitMm:28000, container:catsWrap});
+    var overallMEl = document.getElementById('overallM');
+    var overallMMEl = document.getElementById('overallMM');
+    var overallUnitsEl = document.getElementById('overallUnits');
 
-    window.addEventListener('load', ()=>{
-      const savedUnit = localStorage.getItem('silicone_unit_m');
-      if (savedUnit) unitInput.value = savedUnit;
-      ensureAtLeastOneRow();
-      recalc();
-    });
+    function updateOverall(){
+      var a = catA.compute();
+      var b = catB.compute();
+      var totalMm = a.totalMm + b.totalMm;
+      overallMEl.textContent = mmToMetersStr(totalMm);
+      overallMMEl.textContent = fmtMm(totalMm);
+      overallUnitsEl.textContent = round1(a.unitsRaw + b.unitsRaw) + ' 支';
+    }
 
-    unitInput.addEventListener('input', ()=>{
-      const v = parseFloat(unitInput.value);
-      if (isFinite(v) && v > 0) localStorage.setItem('silicone_unit_m', String(v));
-      recalc();
-    });
+    // 初始載入：確保一定有可輸入的一列
+    catA.load();
+    catB.load();
+    updateOverall();
 
-    document.addEventListener('keydown', (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        createRow('',1);
-      }
+    // 快捷鍵：Ctrl/Cmd + Enter => 在目前聚焦類別新增一列
+    document.addEventListener('keydown', function(e){
+      var isHotkey = (e.ctrlKey || e.metaKey) && e.key === 'Enter';
+      if (!isHotkey) return;
+      var active = document.activeElement;
+      if (catA.focusWithin(active)) { catA.addRowHotkey(); }
+      else if (catB.focusWithin(active)) { catB.addRowHotkey(); }
+      else { catA.addRowHotkey(); } // 預設加在庫版
     });
   </script>
 </body>
